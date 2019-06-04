@@ -5,7 +5,7 @@ program dipole_moment
   real*8,allocatable::r(:,:),charge(:),dipole(:)
   character*25::file1,dumpfile,filename
   integer::i,j,k,n,l,dummy1,dummy2,frequency
-  real*8::timestep,dt,polarization,DP,DP_xy,DP_z
+  real*8::timestep,dt,polarization,DP,DP_xy,DP_z,field_value
   logical::exist
   real(kind=8)::box1,box2,rij(3),box_len,diff(3),avec,bvec,cvec,alpha,beta,gamma
   real(kind=8)::srij(3),h_mat(3,3),h_inv(3,3),vol
@@ -25,95 +25,117 @@ program dipole_moment
    open(2,file=file1,action="read")
    read(2,*)nmols
    read(2,*)natoms
-   read(2,*)nmols_per_stack,nstacks
    read(2,*)timestep,frequency
    read(2,*)nframe,nskip
    read(2,*)dumpfile
+   read(2,*)field_value
    read(2,*)x
- 
+   
+   nstacks=9
+   nmols_per_stack=nmols/nstacks
    ! convertion from fs to ns
    dt=real(frequency)*timestep*0.001d0*0.001d0
    tot_atoms=(nmols*natoms)
    
-   do i=1,nstacks
-       write(filename,'("DP",I1,".xvg")')i
+20 format(a19,2x,F5.2,2x,a11)
+ ! do i=1,nstacks
+       write(filename,'("DP_",F4.2,".xvg")')field_value
+!       write(filename,'("DP",I1,".xvg")')i
+!       write(filename,'("DP.xvg")')
        inquire(file=filename, exist=exist)
        if (exist) then
-            open(40+i,file=filename,status="old",position="append",action="write")      ! bulk dipolemoment in a stack
+            open(40,file=filename,status="old",position="append",action="write")      ! bulk dipolemoment in a stack
        else
-            open(40+i,file=filename,status="new",action="write")      ! bulk dipolemoment in a stack
-            write(40+i,*)"@ title ""Total Dipole Moment "" "
-            write(40+i,*)"@ xaxis label ""Time (ns)"""
-            write(40+i,*)"@ yaxis label ""Dipole moment (D)"""
-            write(40+i,*)"@ TYPE xy"
-            write(40+i,*)"@ view 0.15, 0.15, 0.75, 0.85"
-            write(40+i,*)"@ legend on"
-            write(40+i,*)"@ legend box on"
-            write(40+i,*)"@ legend loctype view"
-            write(40+i,*)"@ legend 0.78, 0.8"
-            write(40+i,*)"@ legend length 2"
-            write(40+i,"(A4,I1,A16,I1,A3)")"@ s",i-1," legend ""Stack\s",i,"\N"""
+            open(40,file=filename,status="new",action="write")      ! bulk dipolemoment in a stack
+            write(40,*)"@ title ""Total Dipole Moment "" "
+            write(40,20)"@ subtitle ""Efield", field_value, "(V/\cE\C) "" "
+            write(40,*)"@ xaxis label ""Time (ns)"""
+            write(40,*)"@ yaxis label ""Dipole moment (D)"""
+            write(40,*)"@ TYPE xy"
+            write(40,*)"@ view 0.15, 0.15, 0.75, 0.85"
+            write(40,*)"@ legend on"
+            write(40,*)"@ legend box on"
+            write(40,*)"@ legend loctype view"
+            write(40,*)"@ legend 0.78, 0.8"
+            write(40,*)"@ legend length 2"
+            do i=1,nstacks
+                write(40,"(A4,I1,A16,I1,A3)")"@ s",i-1," legend ""Stack\s",i,"\N"""
+            enddo
        end if
-       write(filename,'("DP_z",I1,".xvg")')i
+       !write(filename,'("DP_z",I1,".xvg")')i
+       write(filename,'("DP_z_",F4.2,".xvg")')field_value
+       !write(filename,'("DP_z.xvg")')
        inquire(file=filename, exist=exist)
        if (exist) then
-             open(100+i,file=filename,status="old",position="append",action='write')
+             open(100,file=filename,status="old",position="append",action='write')
        else
-             open(100+i,file=filename,status="new",action='write')
-             write(100+i,*)"@ title ""Total Dipole Moment along Stacking &
+             open(100,file=filename,status="new",action='write')
+             write(100,*)"@ title ""Total Dipole Moment along Stacking &
 &Direction"" "
-             write(100+i,*)"@ xaxis label ""Time (ns)"" "
-             write(100+i,*)"@ yaxis label ""Dipole moment along Stacking Direction (D)"""
-             write(100+i,*)"@ TYPE xy"
-             write(100+i,*)"@ view 0.15, 0.15, 0.75, 0.85"
-             write(100+i,*)"@ legend on"
-             write(100+i,*)"@ legend box on"
-             write(100+i,*)"@ legend loctype view"
-             write(100+i,*)"@ legend 0.78, 0.8"
-             write(100+i,*)"@ legend length 2"
-             write(100+i,"(A4,I1,A16,I1,A3)")"@ s",i-1," legend ""Stack\s",i,"\N"""
+             write(100,20)"@ subtitle ""Efield", field_value ,"(V/\cE\C) "" "
+             write(100,*)"@ xaxis label ""Time (ns)"" "
+             write(100,*)"@ yaxis label ""Dipole moment along Stacking Direction (D)"""
+             write(100,*)"@ TYPE xy"
+             write(100,*)"@ view 0.15, 0.15, 0.75, 0.85"
+             write(100,*)"@ legend on"
+             write(100,*)"@ legend box on"
+             write(100,*)"@ legend loctype view"
+             write(100,*)"@ legend 0.78, 0.8"
+             write(100,*)"@ legend length 2"
+             do i=1,nstacks
+                write(100,"(A4,I1,A16,I1,A3)")"@ s",i-1," legend ""Stack\s",i,"\N"""
+             enddo
        endif
 
-       write(filename,'("DP_xy",I1,".xvg")')i
+      ! write(filename,'("DP_xy",I1,".xvg")')i
+       write(filename,'("DP_xy_",F4.2,".xvg")')field_value
+      ! write(filename,'("DP_xy.xvg")')
        inquire(file=filename, exist=exist)
        if (exist) then
-             open(200+i,file=filename,status="old",position="append",action='write')
+             open(200,file=filename,status="old",position="append",action='write')
        else
-             open(200+i,file=filename,status="new",action='write')
-             write(200+i,*)"@ title ""Total Dipole Moment along Stacking &
+             open(200,file=filename,status="new",action='write')
+             write(200,*)"@ title ""Total Dipole Moment along Stacking &
 &Direction"" "
-             write(200+i,*)"@ xaxis label ""Time (ns)"" "
-             write(200+i,*)"@ yaxis label ""Dipole moment in XY (D)"""
-             write(200+i,*)"@ TYPE xy"
-             write(200+i,*)"@ view 0.15, 0.15, 0.75, 0.85"
-             write(200+i,*)"@ legend on"
-             write(200+i,*)"@ legend box on"
-             write(200+i,*)"@ legend loctype view"
-             write(200+i,*)"@ legend 0.78, 0.8"
-             write(200+i,*)"@ legend length 2"
-             write(200+i,"(A4,I1,A16,I1,A3)")"@ s",i-1," legend ""Stack\s",i,"\N"""
+             write(200,20)"@ subtitle ""Efield", field_value, "(V/\cE\C) "" "
+             write(200,*)"@ xaxis label ""Time (ns)"" "
+             write(200,*)"@ yaxis label ""Dipole moment in XY (D)"""
+             write(200,*)"@ TYPE xy"
+             write(200,*)"@ view 0.15, 0.15, 0.75, 0.85"
+             write(200,*)"@ legend on"
+             write(200,*)"@ legend box on"
+             write(200,*)"@ legend loctype view"
+             write(200,*)"@ legend 0.78, 0.8"
+             write(200,*)"@ legend length 2"
+             do i=1,nstacks
+                write(200,"(A4,I1,A16,I1,A3)")"@ s",i-1," legend ""Stack\s",i,"\N"""
+             enddo
        endif
-   enddo
+ ! enddo
   
    
-   inquire(file="polarization.xvg", exist=exist)
+   write(filename,'("polarization_",F4.2,".xvg")')field_value
+   inquire(file=filename, exist=exist)
    if (exist) then
-       open(2000,file="polarization.xvg",status="old",position="append",action="write")      ! polarization
+       open(2000,file=filename,status="old",position="append",action="write")      ! polarization
    else
-       open(2000,file="polarization.xvg",status="new",action="write")      ! polarization 
+       open(2000,file=filename,status="new",action="write")      ! polarization 
        write(2000,*)"@ title ""Polarization"" "
+       write(2000,20)"@ subtitle ""Efield", field_value, "(V/\cE\C) "" "
        write(2000,*)"@ xaxis label ""Time (ns)"""
        write(2000,*)"@ yaxis label ""Polarization (\xm\f{}C/cm\S2\N)"""
        write(2000,*)"@ TYPE xy"
        write(2000,*)"@ view 0.15, 0.15, 0.75, 0.85"
    end if
 
-   inquire(file="DP.xvg", exist=exist)
+   write(filename,'("Total_DP_",F4.2,".xvg")')field_value
+   inquire(file=filename, exist=exist)
    if (exist) then
-       open(3000,file="DP.xvg",status="old",position="append",action="write")      ! polarization
+       open(3000,file=filename,status="old",position="append",action="write")      ! polarization
    else
-       open(3000,file="DP.xvg",status="new",action="write")      ! polarization 
+       open(3000,file=filename,status="new",action="write")      ! polarization 
        write(3000,*)"@ title ""Dipole moment"" "
+       write(3000,20)"@ subtitle ""Efield", field_value, "(V/\cE\C) "" "
        write(3000,*)"@ xaxis label ""Time (ns)"""
        write(3000,*)"@ yaxis label ""Dipole moment (D)"""
        write(3000,*)"@ TYPE xy"
@@ -195,9 +217,19 @@ program dipole_moment
                enddo
            enddo  ! End of stacks loop
            dipole(:)=dipole(:)/0.20819434d0
-           write(100+i,1000)((iframe+x+nskip-1)*dt),dipole(3)
-           write(200+i,1000)((iframe+x+nskip-1)*dt),dsqrt(dipole(2)**2+dipole(1)**2)
-           write(40+i,1000)((iframe+x+nskip-1)*dt),dsqrt(dot_product(dipole(:),dipole(:)))
+           if (i==1) then
+               write(100,1000,advance="no")((iframe+x+nskip-1)*dt),dipole(3)
+               write(200,1000,advance="no")((iframe+x+nskip-1)*dt),dsqrt(dipole(2)**2+dipole(1)**2)
+               write(40,1000,advance="no")((iframe+x+nskip-1)*dt),dsqrt(dot_product(dipole(:),dipole(:)))
+           elseif (i > 1 .and. i < nstacks) then
+               write(100,10,advance="no")dipole(3)
+               write(200,10,advance="no")dsqrt(dipole(2)**2+dipole(1)**2)
+               write(40,10,advance="no")dsqrt(dot_product(dipole(:),dipole(:)))
+           else 
+               write(100,10)dipole(3)
+               write(200,10)dsqrt(dipole(2)**2+dipole(1)**2)
+               write(40,10)dsqrt(dot_product(dipole(:),dipole(:)))
+           endif
            polarization=polarization+dsqrt(dot_product(dipole(:),dipole(:)))
            DP=dsqrt(dot_product(dipole(:),dipole(:)))+DP
            DP_xy=dsqrt(dipole(2)**2+dipole(1)**2)+DP_xy
@@ -208,6 +240,7 @@ program dipole_moment
         write(3000,10000)((iframe+x+nskip-1)*dt),DP/0.20819434d0,DP_xy/0.20819434d0,DP_z/0.20819434d0
    enddo   
 1000 format(F15.7,3x,F15.7)
+10 format(F15.7,3x)
 10000 format(F15.7,3x,3(F15.7,3x))
 end program dipole_moment
 

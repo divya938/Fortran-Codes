@@ -1,9 +1,9 @@
 144                       !  nmols
 242 ! natoms 
-16  9                 ! nmols_per_stack nstacks
 0.5 5000     ! time step , frequency
-5000 0       ! nframe,nskip
-'../dump.efield_Z_0.3'       !  dumpfile
+2000 0       ! nframe,nskip
+'../dump.efield_Z_0.3' ! dumpfile
+0.3
 0 ! frame number already done
 -0.060725
 -0.075638
